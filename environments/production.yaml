@@ -1,0 +1,58 @@
+# Non-secret production inventory. Deployment values will be added after the
+# NUC and its existing Caddy configuration have been inspected.
+host:
+  name: NUC
+  management_network: tailscale
+
+edge:
+  proxy: caddy
+
+services:
+  listmonk:
+    canonical_url: https://lists.inukollu.in
+    application_root_url: https://lists.inukollu.in
+    exposure: public
+    deployment_status: deployed
+    host_runtime: docker-snap
+    database: shared-host-postgresql
+    database_name: listmonk
+    database_password_backup: /etc/inukollu/listmonk/db-password
+    deployed_version: 6.2.0
+    authentication:
+      local_admin: enabled-fallback
+      oidc:
+        status: enabled-and-verified
+        provider: microsoft-entra-id
+        tenant_id: 1b7d2958-9eba-424d-ba9f-3104f2fd85ac
+        application_name: listmonk-sso
+        application_id: 3ca35f03-1df6-4d1f-908d-5c2ff02ccc2b
+        redirect_uri: https://lists.inukollu.in/auth/oidc
+        auto_create_users: false
+        client_secret_backup: /etc/inukollu/listmonk/oidc-client-secret
+  email_delivery:
+    provider: azure-communication-services-email
+    subscription_id: 8285a30d-d066-4130-89dc-aed9c4476de5
+    resource_group: shared-infra-rg
+    communication_service: inukollu-shared-communication
+    email_service: inukollu-shared-email
+    data_location: United States
+    smtp:
+      status: configured-test-message-accepted
+      entra_application: listmonk-shared-email-smtp
+      application_id: 4ba502dd-6d6d-4942-8c4e-b759295009e4
+      resource_name: listmonk-smtp
+      username: listmonk-inukollu
+      host: smtp.azurecomm.net
+      port: 587
+      tls: STARTTLS
+      password_backup: /etc/inukollu/listmonk/smtp-password
+    domains:
+      - name: inukollu.in
+        status: verified-and-linked
+        sender_status: on-hold
+      - name: privatenumber.in
+        status: verified-and-linked
+        senders:
+          - address: newsletter@privatenumber.in
+            display_name: PrivateNumber
+            status: active

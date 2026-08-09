@@ -1,0 +1,26 @@
+# Copy this file to projects/<slug>.yaml. Do not put credentials here.
+project:
+  slug: example
+  owner: owner@example.com
+  environment: nonproduction
+
+email:
+  # This is the project's outbound email identity, not the shared Listmonk URL.
+  sending_domain: mail.example.com
+  traffic:
+    transactional: true
+    marketing: false
+  limits:
+    messages_per_second: 1
+    messages_per_day: 100
+  alerts:
+    bounce_rate_percent: 2
+    complaint_rate_percent: 0.1
+    quota_usage_percent: 80
+  list_management:
+    enabled: false
+    lists: []
+
+data:
+  classification: internal
+  retention_notes: "Define before production onboarding."

@@ -1,0 +1,21 @@
+services:
+  app:
+    image: listmonk/listmonk:v6.2.0
+    container_name: listmonk
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - /var/snap/docker/common/listmonk/listmonk.env
+    command:
+      - sh
+      - -c
+      - >-
+        ./listmonk --install --idempotent --yes --config '' &&
+        ./listmonk --upgrade --yes --config '' &&
+        exec ./listmonk --config ''
+    volumes:
+      - listmonk-uploads:/listmonk/uploads
+
+volumes:
+  listmonk-uploads:
+    name: listmonk-uploads
