@@ -1,19 +1,22 @@
 lists.inukollu.in {
-    encode zstd gzip
+	encode zstd gzip
 
-    reverse_proxy 127.0.0.1:9000
+	reverse_proxy 127.0.0.1:9000
 
-    header {
-        X-Content-Type-Options nosniff
-        Referrer-Policy strict-origin-when-cross-origin
-        X-Frame-Options DENY
-    }
+	@publicSubscription path /api/public/subscription
+	header @publicSubscription Access-Control-Allow-Origin "*"
 
-    log {
-        output file /var/log/caddy/listmonk.access.log {
-            roll_size 10MiB
-            roll_keep 10
-            roll_keep_for 720h
-        }
-    }
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+	}
+
+	log {
+		output file /var/log/caddy/listmonk.access.log {
+			roll_size 10MiB
+			roll_keep 10
+			roll_keep_for 720h
+		}
+	}
 }

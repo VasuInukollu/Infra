@@ -67,6 +67,9 @@ every Caddy change.
 - Runtime environment: `/var/snap/docker/common/listmonk/listmonk.env` (`0600`)
 - Caddy site: `/etc/caddy/sites/listmonk.caddy`
 - Caddy access log: `/var/log/caddy/listmonk.access.log`
+- The public subscription endpoint `/api/public/subscription` returns
+  `Access-Control-Allow-Origin: *` so static sites can use Listmonk's public
+  double-opt-in flow. This does not apply to Listmonk's administrative API.
 - Database: `listmonk` on the existing host PostgreSQL
 - Database owner/login: `listmonk` (non-superuser)
 - Database password backup: `/etc/inukollu/listmonk/db-password` (`0600`)
