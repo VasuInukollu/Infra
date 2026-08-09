@@ -28,6 +28,10 @@ The first platform capability is email:
   gateway. Listmonk's transactional API is used only when its templates or
   subscriber data are specifically useful.
 
+The platform also provides a host-local GeoIP lookup API on the NUC. It is
+available only at `http://127.0.0.1:8082` and refreshes its bundled GeoLite2
+database automatically each week; see `services/geoip-api/`.
+
 The canonical production URL reserved for list management is
 `https://lists.inukollu.in`. It is recorded in
 `environments/production.yaml`; the route is not deployed yet.

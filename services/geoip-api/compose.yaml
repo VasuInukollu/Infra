@@ -1,0 +1,13 @@
+services:
+  app:
+    image: observabilitystack/geoip-api:latest
+    container_name: geoip-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: 1.0

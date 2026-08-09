@@ -102,6 +102,26 @@ also restricted to loopback and is exposed publicly only through Caddy.
 - Create scoped API users/tokens in **Admin → Users**. Do not share the admin
   credential with applications.
 
+## GeoIP API
+
+- Status: deployed for applications running on the NUC
+- Image: `observabilitystack/geoip-api:latest`
+- Container: `geoip-api`
+- Restart policy: `unless-stopped`
+- Listener: `127.0.0.1:8082`
+- Compose file: `/var/snap/docker/common/geoip-api/compose.yaml`
+- Persistence: none; GeoLite2 databases are included in the weekly image
+- Exposure: host loopback only, with no Caddy route or DNS name
+- Authentication: none; callers must be local processes on the NUC
+- Updates: weekly `geoip-api-update.timer`, with a live lookup check and
+  automatic rollback to the previously running image on failure
+
+Port 8082 was selected because ports 8080 and 8081 were already allocated. The
+container runs with a read-only root filesystem, a PID limit, and CPU and memory
+limits. The image's shell entrypoint is incompatible with capability dropping
+and Docker's `no-new-privileges` flag, so network isolation is the primary
+security boundary.
+
 ## API documentation
 
 - Official Swagger UI: `https://listmonk.app/docs/swagger/`

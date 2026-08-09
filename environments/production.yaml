@@ -8,6 +8,14 @@ edge:
   proxy: caddy
 
 services:
+  geoip_api:
+    endpoint: http://127.0.0.1:8082
+    exposure: host-loopback-only
+    deployment_status: deployed
+    host_runtime: docker-snap
+    image: observabilitystack/geoip-api:latest
+    update_schedule: weekly-systemd-timer-with-health-check-and-rollback
+    persistence: none
   listmonk:
     canonical_url: https://lists.inukollu.in
     application_root_url: https://lists.inukollu.in
