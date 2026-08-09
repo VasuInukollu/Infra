@@ -124,6 +124,49 @@ Caddy obtained the public certificate through an HTTP-01 ACME challenge. Both
 the Listmonk route and the pre-existing PrivateNumber route returned HTTP 200
 after deployment.
 
+## PrivateNumber authentication and administration
+
+PrivateNumber production is served at `https://app.privatenumber.in` through
+the shared native Caddy service:
+
+- Subscriber portal: `/`, static releases under
+  `/opt/private-number/portal/{releases,current}`.
+- API and OpenIddict: `/api/*`, `/connect/*`, `/health`, and `/alive`, service
+  `private-number-api` on loopback port 5080, releases under
+  `/opt/private-number/api/{releases,current}`.
+- Operations application: `/admin/*`, service `private-number-admin` on
+  loopback port 5090, releases under
+  `/opt/private-number/admin/{releases,current}`.
+
+PrivateNumber host configuration is under `/etc/private-number`:
+
+- `api.env`: database connection, OpenIddict certificate password, and ACS
+  SMTP settings; `root:private-number`, mode `0640`.
+- `admin.env`: Entra tenant, application, and `PrivateNumber Admins` group
+  object IDs; `root:private-number`, mode `0640`.
+- `openiddict.pfx`: persistent signing/encryption certificate;
+  `root:private-number`, mode `0640`.
+- `secrets/openiddict-password`: certificate-password backup; `root:root`, mode
+  `0600`.
+- `secrets/postgres-password`: PostgreSQL-password backup; `root:root`, mode
+  `0600`.
+
+The admin app has no local credentials. Its single-tenant Entra application is
+named `PrivateNumber Admin`; the assigned security group is
+`PrivateNumber Admins`. Explicit enterprise-application assignment is
+required, and only assigned-group claims are emitted.
+
+Root-owned deployment helpers live at
+`/usr/local/sbin/private-number-*-deploy`. GitHub's deployment account may call
+only the helpers listed in `/etc/sudoers.d/private-number-deploy`. Application
+CD activates atomic releases and cannot rewrite systemd, sudoers, Caddy, or
+secret files. Repository rebuild/repair instructions live in the PrivateNumber
+repository's `ops/linux/README.md` and `docs/admin-application.md`.
+
+As of 2026-08-09, the authentication certificate/environment, admin
+environment, admin unit/deployer, and additive Caddy routes are provisioned.
+The first authentication/admin application release remains to be deployed.
+
 ## Outstanding operations
 
 - Azure Communication Services Email has been selected. Its base resources are
