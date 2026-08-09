@@ -140,16 +140,23 @@ the shared native Caddy service:
 
 PrivateNumber host configuration is under `/etc/private-number`:
 
+- The directory is `root:private-number`, mode `0750`, allowing the service
+  account to traverse to group-readable configuration while keeping unrelated
+  users out.
 - `api.env`: database connection, OpenIddict certificate password, and ACS
   SMTP settings; `root:private-number`, mode `0640`.
 - `admin.env`: Entra tenant, application, and `PrivateNumber Admins` group
   object IDs; `root:private-number`, mode `0640`.
 - `openiddict.pfx`: persistent signing/encryption certificate;
   `root:private-number`, mode `0640`.
-- `secrets/openiddict-password`: certificate-password backup; `root:root`, mode
+- `backups/openiddict-password`: certificate-password backup; `root:root`, mode
   `0600`.
-- `secrets/postgres-password`: PostgreSQL-password backup; `root:root`, mode
+- `backups/postgres-password`: PostgreSQL-password backup; `root:root`, mode
   `0600`.
+- `backups/openiddict.pfx` is the verified root-only recovery copy (`0600`) of
+  the service-readable PFX. It uses the adjacent `openiddict-password` backup.
+  This is a second copy on the same server and does not cover complete host or
+  disk loss.
 
 The admin app has no local credentials. Its single-tenant Entra application is
 named `PrivateNumber Admin`; the assigned security group is
@@ -164,8 +171,9 @@ secret files. Repository rebuild/repair instructions live in the PrivateNumber
 repository's `ops/linux/README.md` and `docs/admin-application.md`.
 
 As of 2026-08-09, the authentication certificate/environment, admin
-environment, admin unit/deployer, and additive Caddy routes are provisioned.
-The first authentication/admin application release remains to be deployed.
+environment, admin unit/deployer, additive Caddy routes, Identity/OpenIddict
+migration, subscriber API/portal, and admin application are deployed. Both
+`private-number-api` and `private-number-admin` are active.
 
 ## Outstanding operations
 
