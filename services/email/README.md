@@ -3,6 +3,16 @@
 Azure Communication Services Email is the managed outbound delivery layer for
 Listmonk and future shared-infrastructure consumers.
 
+Transactional applications use the authenticated mail gateway at
+`https://resend.inukollu.in`; they do not receive the shared ACS SMTP
+credential. The gateway applies per-project sender policy and quotas, then
+submits through the same ACS SMTP identity used by Listmonk. See
+`services/mail-gateway/README.md` for its API and operating procedure.
+
+Listmonk continues to use ACS directly for campaigns and subscriber-managed
+mail. The gateway does not provide campaign, subscriber, template, bounce, or
+durable-queue functionality.
+
 ## Azure resources
 
 - Subscription: `Visual Studio Enterprise`
@@ -76,6 +86,10 @@ the Azure configuration was verified.
 On 2026-08-09, Azure SMTP accepted a controlled test message from
 `newsletter@privatenumber.in` to `vasu@inukollu.com`. Confirm inbox placement
 separately; SMTP acceptance alone does not prove final delivery.
+
+On 2026-08-11, Azure accepted a controlled message submitted through the mail
+gateway. An idempotent replay returned the original gateway message ID without
+a second provider submission.
 
 ## Remaining setup
 

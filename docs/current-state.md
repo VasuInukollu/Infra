@@ -1,6 +1,6 @@
 # Current production state
 
-Last verified: 2026-08-09 (Asia/Kolkata)
+Last verified: 2026-08-11 (Asia/Kolkata)
 
 This document contains operational metadata only. It intentionally contains no
 secret values.
@@ -82,6 +82,37 @@ every Caddy change.
 Listmonk uses Docker host networking specifically because the existing
 PostgreSQL server listens only on host loopback. The Listmonk HTTP listener is
 also restricted to loopback and is exposed publicly only through Caddy.
+
+## Mail gateway
+
+- Status: deployed, active, enabled, and publicly reachable
+- URL: `https://resend.inukollu.in`
+- API: authenticated `POST /v1/emails`
+- Health/readiness: `/health` and `/ready`
+- Runtime: ASP.NET Core / .NET 10, systemd service `mail-gateway`
+- Application listener: `127.0.0.1:5085`
+- Application releases: `/opt/mail-gateway/releases/`
+- Active symlink: `/opt/mail-gateway/current`
+- Configuration: `/etc/inukollu/mail-gateway/appsettings.Production.json`
+- Provider credential files: `/etc/inukollu/mail-gateway/smtp-{username,password}`
+- Project key handoffs: `/etc/inukollu/mail-gateway/project-keys/` (`0600`)
+- Caddy site: `/etc/caddy/sites/mail-gateway.caddy`
+- Source repository: `https://github.com/inukollu/Resend`
+- Deployment helper: `/usr/local/sbin/mail-gateway-deploy`
+- Deployment account: `privatenumber-deploy`, restricted through
+  `/etc/sudoers.d/mail-gateway-deploy`
+
+The gateway uses a Resend-shaped request contract and relays through the shared
+ACS SMTP identity. Applications authenticate with isolated project bearer keys;
+the ACS credential remains on the NUC. The initial `default-production` project
+allows only `newsletter@privatenumber.in`. Azure accepted the controlled
+deployment-verification submission on 2026-08-11, and idempotent replay was
+verified not to submit it twice.
+
+CI builds, tests, and publishes a Linux x64 artifact. CD downloads that exact
+artifact, connects over Tailscale, and activates it using the restricted helper
+with automatic health-gated rollback. Detailed API usage, project provisioning,
+secret locations, and operations are in `services/mail-gateway/README.md`.
 
 ## Authentication
 
@@ -225,6 +256,9 @@ ssh nuc 'docker ps --filter name=^/listmonk$'
 ssh nuc 'curl -fsS -o /dev/null http://127.0.0.1:9000/'
 curl -fsS -o /dev/null https://lists.inukollu.in/
 ```
+
+Mail gateway checks are documented separately in
+`services/mail-gateway/README.md`.
 
 Use `services/listmonk/install.sh` for the documented deployment flow. Review
 the script and current server state before rerunning it.
