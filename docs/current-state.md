@@ -87,7 +87,8 @@ also restricted to loopback and is exposed publicly only through Caddy.
 
 - Status: deployed, active, enabled, and publicly reachable
 - URL: `https://resend.inukollu.in`
-- API: authenticated `POST /v1/emails`
+- Deployed API: authenticated `POST /v1/emails`, `POST /v1/senders`, and
+  `GET /v1/senders`
 - Health/readiness: `/health` and `/ready`
 - Runtime: ASP.NET Core / .NET 10, systemd service `mail-gateway`
 - Application listener: `127.0.0.1:5085`
@@ -95,6 +96,11 @@ also restricted to loopback and is exposed publicly only through Caddy.
 - Active symlink: `/opt/mail-gateway/current`
 - Configuration: `/etc/inukollu/mail-gateway/appsettings.Production.json`
 - Provider credential files: `/etc/inukollu/mail-gateway/smtp-{username,password}`
+- Azure management credential:
+  `/etc/inukollu/mail-gateway/azure-management-client-secret`
+  (`root:mail-gateway`, `0640`)
+- Durable sender registry: `/var/lib/mail-gateway/senders.json`
+  (`mail-gateway:mail-gateway`, `0640`)
 - Project key handoffs: `/etc/inukollu/mail-gateway/project-keys/` (`0600`)
 - Caddy site: `/etc/caddy/sites/mail-gateway.caddy`
 - Source repository: `https://github.com/inukollu/Resend`
@@ -105,9 +111,28 @@ also restricted to loopback and is exposed publicly only through Caddy.
 The gateway uses a Resend-shaped request contract and relays through the shared
 ACS SMTP identity. Applications authenticate with isolated project bearer keys;
 the ACS credential remains on the NUC. The initial `default-production` project
-allows only `newsletter@privatenumber.in`. Azure accepted the controlled
+allows `newsletter@privatenumber.in` and the transactional account sender
+`accounts@privatenumber.in`. Azure accepted the controlled
 deployment-verification submission on 2026-08-11, and idempotent replay was
 verified not to submit it twice.
+
+Sender self-registration is deployed and Azure provisioning is enabled.
+Authenticated internal users choose the complete sender email and
+display name; the gateway performs the Azure sender-username registration.
+There is no per-user domain ownership check because domain verification and
+linking remain operator-managed in Azure. A repeated email and display name is
+idempotent, while the same normalized email with a different display name
+returns `409 sender_already_exists` rather than overwriting the Azure identity.
+The active unit uses `UMask=0027` and grants write access only to
+`/var/lib/mail-gateway`. Release `31440048131-1` deployed the hardened source.
+
+End-to-end verification on 2026-08-11 used the already existing
+`newsletter@privatenumber.in` / `PrivateNumber` identity, so Azure was not
+mutated merely for testing. Initial local registration returned `201`, an
+identical replay returned `200`, and a different display name returned
+`409 sender_already_exists`. The registry survived restart and CD deployment.
+Public health/readiness succeeded, unauthenticated sender listing returned
+`401`, and the Listmonk and PrivateNumber routes remained HTTP `200`.
 
 CI builds, tests, and publishes a Linux x64 artifact. CD downloads that exact
 artifact, connects over Tailscale, and activates it using the restricted helper
@@ -232,7 +257,8 @@ migration, subscriber API/portal, and admin application are deployed. Both
 - Azure Communication Services Email has been selected. Its base resources are
   deployed, and `inukollu.in` and `privatenumber.in` are fully DNS-verified and
   linked. The `newsletter@privatenumber.in` sender exists with display name
-  `PrivateNumber`; creation of an Inukollu sender is intentionally on hold.
+  `PrivateNumber`; `accounts@privatenumber.in` exists with display name
+  `PrivateNumber Accounts`; creation of an Inukollu sender is intentionally on hold.
   Listmonk is configured for ACS SMTP and authentication has been verified.
   Azure accepted a controlled message to `vasu@inukollu.com`; inbox placement
   remains to be confirmed. See `services/email/README.md`.

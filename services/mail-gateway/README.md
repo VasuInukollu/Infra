@@ -14,6 +14,8 @@ the full API and operator reference.
 
 - Public URL: `https://resend.inukollu.in`
 - Send endpoint: `POST /v1/emails`
+- Register sender: `POST /v1/senders`
+- List senders: `GET /v1/senders`
 - Health: `GET /health`
 - Readiness: `GET /ready`
 - NUC listener: `127.0.0.1:5085`
@@ -26,6 +28,51 @@ the full API and operator reference.
 Caddy is the public TLS boundary. Email submission requires a project bearer
 key. Health and readiness disclose no credentials or message data and do not
 submit mail.
+
+The sender endpoints and Azure management provisioning are active in production
+and enforce project bearer authentication. The initial durable catalog contains
+`newsletter@privatenumber.in` with display name `PrivateNumber`.
+
+## Sender registration
+
+Authenticated internal users choose both the complete sender email address and
+display name. Domain verification and linking remain centralized operator
+activities in Azure; the API does not enforce per-user domain ownership.
+
+```http
+POST /v1/senders HTTP/1.1
+Host: resend.inukollu.in
+Authorization: Bearer project_api_key
+Content-Type: application/json
+
+{
+  "email": "billing@privatenumber.in",
+  "display_name": "PrivateNumber Billing"
+}
+```
+
+A new sender is registered beneath its verified ACS domain, persisted, and
+returned with `201 Created`. Repeating the same normalized email and display
+name returns the existing record with `200 OK`. The same email with a different
+display name is not allowed to overwrite the global Azure sender resource and
+returns:
+
+```http
+409 Conflict
+```
+
+```json
+{
+  "code": "sender_already_exists",
+  "message": "This sender email is already registered with a different display name."
+}
+```
+
+`GET /v1/senders` returns the global registered-sender catalog to authenticated,
+enabled projects. Successfully registered senders are accepted by
+`POST /v1/emails` in addition to statically configured sender allowlists. A
+domain that has not yet been prepared by the operator returns
+`422 domain_not_available`.
 
 ## Application request
 
@@ -97,8 +144,10 @@ environment receives an independently revocable gateway bearer key with:
 - a kill switch;
 - optional recipient-domain restrictions for nonproduction.
 
-The initial project is `default-production` and currently permits only
-`newsletter@privatenumber.in`. Its root-only handoff is on the NUC at:
+The initial project is `default-production` and permits the PrivateNumber
+senders `newsletter@privatenumber.in` and `accounts@privatenumber.in`. The
+newsletter identity is for campaigns; account verification and recovery use
+the accounts identity. Its root-only handoff is on the NUC at:
 
 ```text
 /etc/inukollu/mail-gateway/project-keys/default-production
@@ -168,6 +217,57 @@ The gateway reads the shared ACS username and password from:
 They are `root:mail-gateway` mode `0640`. The canonical root-only Listmonk
 backups remain under `/etc/inukollu/listmonk/`. Rotate the protected copies
 together when the shared Entra client secret changes.
+
+Sender registration uses this Azure Resource Manager credential path:
+
+```text
+/etc/inukollu/mail-gateway/azure-management-client-secret
+```
+
+It is `root:mail-gateway` mode `0640` and is a protected server-side copy of the
+existing ACS principal's Entra client secret. The active `AzureManagement`
+configuration references tenant `1b7d2958-9eba-424d-ba9f-3104f2fd85ac`, client
+`4ba502dd-6d6d-4942-8c4e-b759295009e4`, subscription
+`8285a30d-d066-4130-89dc-aed9c4476de5`, resource group `shared-infra-rg`, and
+Email Communication Service `inukollu-shared-email`.
+
+The custom role `Mail Gateway Sender Username Manager` (definition
+`4b1820b4-fd7e-4a4f-a2ba-b18252ef3480`) is assigned to service-principal object
+`a2eaa2d7-9e29-4cd8-8101-fd49747ba62d` at the Email Communication Service
+scope. It contains only:
+
+```text
+Microsoft.Communication/emailServices/domains/senderUsernames/read
+Microsoft.Communication/emailServices/domains/senderUsernames/write
+```
+
+Successful sender records persist independently of immutable application
+releases at:
+
+```text
+/var/lib/mail-gateway/senders.json
+```
+
+The directory is `mail-gateway:mail-gateway` mode `0750`; the registry file is
+mode `0640`. The hardened systemd unit uses `UMask=0027` and grants
+`ReadWritePaths=/var/lib/mail-gateway`. Deployment preserves the registry across
+releases and rollbacks.
+
+### Sender registration verification
+
+On 2026-08-11, `newsletter@privatenumber.in` with its existing display name
+`PrivateNumber` was used to verify the complete path without changing Azure:
+
+- first local registration returned `201`;
+- identical replay returned `200` with the same sender ID;
+- a different display name returned `409 sender_already_exists`;
+- the catalog survived service restart and CD deployment;
+- unauthenticated `GET /v1/senders` returned `401`;
+- public gateway health/readiness, Listmonk, and PrivateNumber remained healthy.
+
+The active release after this work was `/opt/mail-gateway/releases/31440048131-1`.
+Detailed implementation and rollback guidance also lives in the Resend source
+repository at `docs/sender-registration.md`.
 
 Logs contain message ID, project, environment, sender domain, and recipient
 domains. They must never contain message bodies, attachments, bearer keys, or

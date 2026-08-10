@@ -16,6 +16,13 @@ email:
   sending_domain: mail.example.com
   allowed_senders:
     - notifications@mail.example.com
+  # Applications may register these identities through POST /v1/senders after
+  # the operator verifies and links the domain in Azure. Domain verification is
+  # always an operator responsibility.
+  requested_senders:
+    - email: notifications@mail.example.com
+      display_name: Example Notifications
+      status: requested
   allowed_recipient_domains:
     - example.com
   traffic:

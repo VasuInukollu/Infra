@@ -24,6 +24,38 @@ durable-queue functionality.
 
 No access keys, SMTP secrets, or Entra client secrets belong in this repository.
 
+## Sender-management identity
+
+The mail gateway's sender-registration API requires Azure Resource Manager
+access in addition to SMTP authentication. It reuses the existing
+`listmonk-shared-email-smtp` principal and its already protected Entra client
+secret. The custom role assigned at the `inukollu-shared-email` resource scope
+is:
+
+```text
+Role name: Mail Gateway Sender Username Manager
+Role definition ID: 4b1820b4-fd7e-4a4f-a2ba-b18252ef3480
+Service-principal object ID: a2eaa2d7-9e29-4cd8-8101-fd49747ba62d
+```
+
+The role contains only these management actions:
+
+```text
+Microsoft.Communication/emailServices/domains/senderUsernames/read
+Microsoft.Communication/emailServices/domains/senderUsernames/write
+```
+
+The role is assigned at this exact scope:
+
+```text
+/subscriptions/8285a30d-d066-4130-89dc-aed9c4476de5/resourceGroups/shared-infra-rg/providers/Microsoft.Communication/emailServices/inukollu-shared-email
+```
+
+Store the client secret only in the protected NUC file
+`/etc/inukollu/mail-gateway/azure-management-client-secret`, owned by root and
+readable by the `mail-gateway` group (`0640`). It is a server-side protected
+copy of the same Entra secret used for ACS SMTP; never print or transfer it.
+
 ## Shared Listmonk SMTP identity
 
 - Entra application/service-principal display name:
@@ -76,7 +108,18 @@ not append the zone twice.
 ## Current sender state
 
 - Active: `newsletter@privatenumber.in` (`PrivateNumber`)
+- Active: `accounts@privatenumber.in` (`PrivateNumber Accounts`) for
+  transactional account verification and password recovery through the shared
+  mail gateway
 - On hold: custom Inukollu sender
+
+Sender registration and Azure management provisioning are deployed and active.
+Authenticated internal users may choose any complete sender address and display
+name under an operator-verified and linked ACS domain. Domain verification stays
+an operator activity; the API does not perform per-user ownership verification.
+The existing newsletter identity was registered into the durable local catalog
+without changing its Azure resource; `201`, idempotent `200`, and conflicting
+display-name `409` behavior were verified on 2026-08-11.
 
 Listmonk is configured to route through Azure using the active PrivateNumber
 sender. SMTP authentication was verified successfully without sending mail.

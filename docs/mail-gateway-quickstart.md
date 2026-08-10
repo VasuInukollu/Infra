@@ -31,6 +31,30 @@ Use a separate project ID and bearer key for every environment. Nonproduction
 projects should restrict recipient domains so test systems cannot email the
 public accidentally.
 
+## Sender registration
+
+`POST /v1/senders` and `GET /v1/senders` are active and enforce project bearer
+authentication. The operator verifies and links domains in Azure. Authenticated
+projects may then register a complete sender email and display name under an
+operator-prepared domain and list the global sender catalog.
+
+Registering a new identity returns `201`. Registering the same normalized email
+and display name is idempotent and returns `200`; attempting to use a different
+display name for an existing normalized email returns
+`409 sender_already_exists`. A domain that is not prepared in Azure returns
+`422 domain_not_available`.
+
+```bash
+curl --fail-with-body \
+  https://resend.inukollu.in/v1/senders \
+  -H "Authorization: Bearer $MAIL_GATEWAY_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data '{
+    "email": "notifications@mail.example.com",
+    "display_name": "Example Notifications"
+  }'
+```
+
 ## Send a message
 
 Every request requires a bearer key and an `Idempotency-Key`:

@@ -28,6 +28,12 @@ Applications send transactional messages through the shared mail gateway at
 templates or subscribers. The gateway contract remains stable if Azure is later
 replaced by Postal, SES, or another provider.
 
+Keep domain verification and linking under platform-operator control. The
+gateway may allow authenticated projects to register sender addresses only
+within operator-prepared domains. Sender-management Azure permissions use a
+narrowly scoped management identity and are separate from SMTP submission
+credentials.
+
 ## Consequences
 
 Benefits:

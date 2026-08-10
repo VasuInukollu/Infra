@@ -54,6 +54,20 @@ The gateway contract for every project is:
 - a rate limit, daily limit, alert threshold, and independent disable switch;
 - bounce/complaint events connected to suppression handling.
 
+### Sender lifecycle
+
+Azure domain verification and linking are platform-operator responsibilities.
+They are never delegated to individual projects. Within those prepared domains,
+the gateway source implements authenticated sender registration and discovery.
+The sender chooses a complete email address and display name; a normalized email
+cannot later be overwritten with a different display name.
+
+Production Azure provisioning is active through an explicitly authorized Entra
+service principal with narrowly scoped Azure Resource Manager sender-username
+read/write permissions. Sender state persists outside immutable application
+releases at `/var/lib/mail-gateway/senders.json`. The systemd sandbox grants
+only that additional writable path and uses a restrictive umask.
+
 Do not expose an unauthenticated relay. Do not run outbound mail delivery from a
 generic VM for the first version; deliverability is an operational product of
 its own.

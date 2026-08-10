@@ -48,6 +48,18 @@ services:
     authentication: per-project-bearer-key
     idempotency: required-process-local
     source_repository: https://github.com/inukollu/Resend
+    sender_management:
+      deployment_status: deployed-and-verified
+      register_endpoint: https://resend.inukollu.in/v1/senders
+      list_endpoint: https://resend.inukollu.in/v1/senders
+      registry: /var/lib/mail-gateway/senders.json
+      registry_mode: "0640"
+      domain_verification: operator-managed-in-azure
+      azure_management:
+        service_principal_object_id: a2eaa2d7-9e29-4cd8-8101-fd49747ba62d
+        role_name: Mail Gateway Sender Username Manager
+        role_definition_id: 4b1820b4-fd7e-4a4f-a2ba-b18252ef3480
+        credential_path: /etc/inukollu/mail-gateway/azure-management-client-secret
   email_delivery:
     provider: azure-communication-services-email
     subscription_id: 8285a30d-d066-4130-89dc-aed9c4476de5
@@ -74,4 +86,8 @@ services:
         senders:
           - address: newsletter@privatenumber.in
             display_name: PrivateNumber
+            status: active
+            gateway_registry_status: active
+          - address: accounts@privatenumber.in
+            display_name: PrivateNumber Accounts
             status: active

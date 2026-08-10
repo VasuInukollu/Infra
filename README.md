@@ -24,6 +24,10 @@ The first platform capability is email:
   `https://resend.inukollu.in` gives each project/environment a separate bearer
   key, sender allowlist, quotas, and kill switch while keeping the shared Azure
   credential private. See [the consumer quickstart](docs/mail-gateway-quickstart.md).
+- **Sender management** — authenticated sender registration and listing are
+  deployed with narrowly scoped Azure provisioning and durable registry state.
+  Users choose the complete sender email and display name; domain verification
+  and linking remain centralized Azure operator tasks.
 - **List management** — one Listmonk installation, with lists and API users
   scoped per project.
 - **Transactional mail** — projects normally send directly through the delivery
@@ -68,7 +72,8 @@ environments/         non-secret environment inventory
 ## Onboard a project
 
 1. Copy `projects/example.yaml` to `projects/<project>.yaml`.
-2. Choose and verify the project's sending domain and approved sender addresses.
+2. Choose the project's sending domain and requested sender addresses. A shared
+   infrastructure operator must verify and link the domain in Azure.
 3. Provision a mail-gateway project entry and bearer key as described in the
    [mail-gateway quickstart](docs/mail-gateway-quickstart.md). Store the raw key
    only in the application's protected configuration; never give applications
