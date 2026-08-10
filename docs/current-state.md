@@ -113,6 +113,7 @@ CI builds, tests, and publishes a Linux x64 artifact. CD downloads that exact
 artifact, connects over Tailscale, and activates it using the restricted helper
 with automatic health-gated rollback. Detailed API usage, project provisioning,
 secret locations, and operations are in `services/mail-gateway/README.md`.
+Consuming applications should begin with `docs/mail-gateway-quickstart.md`.
 
 ## Authentication
 

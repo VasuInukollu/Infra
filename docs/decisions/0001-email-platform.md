@@ -1,7 +1,8 @@
 # ADR 0001: Managed delivery with shared Listmonk
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-09
+- Updated: 2026-08-11
 
 ## Context
 
@@ -12,16 +13,20 @@ queueing, bounce handling, and blocklist responsibilities.
 
 ## Decision
 
-Use a managed email delivery provider as the outbound gateway. Give each project
-its own verified identity, restricted credential, configuration/traffic class,
-metrics, quotas, and kill switch.
+Use Azure Communication Services Email as the managed outbound provider. Put a
+small, provider-independent transactional mail gateway in front of it. Give
+each project/environment its own gateway bearer key, verified sender policy,
+traffic limits, metrics, and kill switch; do not distribute the shared Azure
+SMTP credential to applications.
 
 Run a shared Listmonk installation for campaign and subscriber management, with
 PostgreSQL and list-scoped roles/API users. Use separate Listmonk instances where
 the shared database or administrator boundary is unacceptable.
 
-Applications send transactional messages directly through the gateway unless
-they explicitly need Listmonk-managed templates or subscribers.
+Applications send transactional messages through the shared mail gateway at
+`https://resend.inukollu.in` unless they explicitly need Listmonk-managed
+templates or subscribers. The gateway contract remains stable if Azure is later
+replaced by Postal, SES, or another provider.
 
 ## Consequences
 
@@ -35,6 +40,8 @@ Benefits:
 Costs and risks:
 
 - provider cost and dependency;
+- the gateway is another shared availability boundary;
+- its initial idempotency and quota state is process-local and resets on restart;
 - shared Listmonk/PostgreSQL outage affects all campaign users;
 - platform administrators can access subscriber data across projects;
 - role and list provisioning must be maintained carefully.

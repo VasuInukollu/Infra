@@ -5,8 +5,19 @@ project:
   environment: nonproduction
 
 email:
-  # This is the project's outbound email identity, not the shared Listmonk URL.
+  # Transactional applications submit through https://resend.inukollu.in.
+  # Never put the bearer key or shared Azure SMTP credential in this file.
+  gateway:
+    enabled: true
+    project_id: example-nonproduction
+    endpoint: https://resend.inukollu.in/v1/emails
+    credential_status: not-provisioned
+  # This is the project's outbound identity, not the gateway or Listmonk URL.
   sending_domain: mail.example.com
+  allowed_senders:
+    - notifications@mail.example.com
+  allowed_recipient_domains:
+    - example.com
   traffic:
     transactional: true
     marketing: false

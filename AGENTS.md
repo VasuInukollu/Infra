@@ -27,4 +27,10 @@ Important conventions:
 - Preserve the existing PrivateNumber services and the
   `app.privatenumber.in` Caddy route.
 
-Listmonk deployment source is in `services/listmonk/`.
+Transactional applications use the shared mail gateway at
+`https://resend.inukollu.in`; read `services/mail-gateway/README.md` before
+integrating a project or provisioning access. Applications receive a dedicated
+gateway bearer key and must never receive the shared Azure SMTP credential.
+
+Listmonk deployment source is in `services/listmonk/`. Use Listmonk for
+campaigns and subscriber management, not as the default transactional-mail path.

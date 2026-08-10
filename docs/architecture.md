@@ -28,22 +28,22 @@ isolation requirement, or materially different availability target.
 ## Email capability
 
 ```text
-                         ┌──────────────────────────────┐
-application ────────────>│ managed delivery gateway     │──> recipient
-  │                      │ per-project identity/limits  │
-  │                      └──────────────┬───────────────┘
-  │                                     │ delivery events
-  │ campaigns/templates                 v
-  └──────────────────────> Listmonk ─── webhook / suppression handling
-                              │
-                           PostgreSQL
+application ──HTTPS──> Mail gateway ──SMTP──> Azure Email ──> recipient
+  │                  │                         │
+  │                  └─ per-project key,       └─ delivery events
+  │                     sender policy, limits
+  │ campaigns/templates
+  └──────────────────────> Listmonk ─────> PostgreSQL
 ```
 
 ### Delivery gateway
 
-Use a managed sender such as Amazon SES, Postmark, Mailgun, or an equivalent
-regional provider. Provider selection is intentionally deferred until hosting
-region, volume, budget, and compliance needs are known.
+The deployed mail gateway at `https://resend.inukollu.in` is the stable
+transactional submission boundary for applications. It exposes a small
+Resend-shaped HTTPS contract and currently relays through Azure Communication
+Services Email over authenticated SMTP. Applications receive per-project keys;
+they do not receive the shared Azure credential. The provider can later be
+replaced without changing application integrations.
 
 The gateway contract for every project is:
 
@@ -79,12 +79,17 @@ isolation receive a separate instance.
 
 ### Transactional versus campaign messages
 
-Applications should use the delivery provider API/SMTP submission directly for
-password resets, receipts, alerts, and other latency-sensitive transactional
-mail. Campaigns and opt-in subscriber lists go through Listmonk. The Listmonk
+Applications should use the shared mail gateway for password resets, receipts,
+alerts, and other transactional mail. Campaigns and opt-in subscriber lists go
+through Listmonk. The Listmonk
 transactional endpoint is appropriate when a project deliberately wants shared
 Listmonk templates or subscriber records; it should not become an unnecessary
 hop for all application mail.
+
+The gateway is a synchronous submission service, not a durable queue. A `202`
+means Azure accepted the SMTP submission, not that the message reached the
+inbox. Callers retain a stable idempotency key and retry temporary failures with
+backoff. See [the consumer quickstart](mail-gateway-quickstart.md).
 
 ## Platform layers
 
@@ -175,8 +180,9 @@ platform.
 1. **Foundation:** inventory the NUC, its runtime, and existing Caddy
    configuration; choose provider/secret store; establish DNS, TLS, backups,
    monitoring, and production/nonproduction separation.
-2. **Email:** provision per-project identities; deploy Listmonk/PostgreSQL;
-   connect delivery events; onboard one low-risk project.
+2. **Email:** deployed the transactional gateway and Listmonk/PostgreSQL;
+   provision per-project identities and keys, connect delivery events, and
+   onboard projects incrementally.
 3. **Hardening:** SSO, credential rotation, restore rehearsal, rate-limit and
    abuse tests, dashboards, runbooks, and upgrade automation.
 4. **Expansion:** add a service only from demonstrated cross-project demand.

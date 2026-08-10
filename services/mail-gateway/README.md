@@ -6,6 +6,10 @@ accepted messages through Azure Communication Services (ACS) Email over
 authenticated SMTP with STARTTLS. Listmonk remains separate and continues to
 own campaigns and subscriber management.
 
+Application teams should start with the
+[consumer quickstart](../../docs/mail-gateway-quickstart.md). This document is
+the full API and operator reference.
+
 ## Production service
 
 - Public URL: `https://resend.inukollu.in`

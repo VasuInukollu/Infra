@@ -20,8 +20,10 @@ project-c ─┘                         └─ metrics, logs, alerts
 
 The first platform capability is email:
 
-- **Mail delivery gateway** — one provider account, but a separate sending
-  identity, credentials, quotas, metrics, and kill switch for each project.
+- **Transactional mail gateway** — the deployed API at
+  `https://resend.inukollu.in` gives each project/environment a separate bearer
+  key, sender allowlist, quotas, and kill switch while keeping the shared Azure
+  credential private. See [the consumer quickstart](docs/mail-gateway-quickstart.md).
 - **List management** — one Listmonk installation, with lists and API users
   scoped per project.
 - **Transactional mail** — projects normally send directly through the delivery
@@ -32,9 +34,9 @@ The platform also provides a host-local GeoIP lookup API on the NUC. It is
 available only at `http://127.0.0.1:8082` and refreshes its bundled GeoLite2
 database automatically each week; see `services/geoip-api/`.
 
-The canonical production URL reserved for list management is
-`https://lists.inukollu.in`. It is recorded in
-`environments/production.yaml`; the route is not deployed yet.
+The production endpoints are `https://resend.inukollu.in` for transactional
+mail submission and `https://lists.inukollu.in` for list management and
+campaigns. Both are deployed and recorded in `environments/production.yaml`.
 
 The design and its boundaries are in [docs/architecture.md](docs/architecture.md).
 The email decision is in
@@ -59,21 +61,26 @@ not authorize applying them to the NUC; deployment is a separate, reviewed step.
 ```text
 docs/                 architecture and decision records
 projects/             non-secret project registrations
-services/             deployable shared services (next phase)
-environments/         environment-specific composition (next phase)
+services/             deployable shared services and operating guides
+environments/         non-secret environment inventory
 ```
 
 ## Onboard a project
 
 1. Copy `projects/example.yaml` to `projects/<project>.yaml`.
-2. Choose a dedicated sending subdomain, for example `mail.example.com`.
-3. Provision project-specific delivery credentials and DNS records (SPF, DKIM,
-   DMARC); never share a global SMTP password.
-4. If the project sends campaigns, create its Listmonk lists, list role, and API
+2. Choose and verify the project's sending domain and approved sender addresses.
+3. Provision a mail-gateway project entry and bearer key as described in the
+   [mail-gateway quickstart](docs/mail-gateway-quickstart.md). Store the raw key
+   only in the application's protected configuration; never give applications
+   the shared Azure SMTP credential.
+4. Configure the application to call `POST https://resend.inukollu.in/v1/emails`
+   with its bearer key and a stable `Idempotency-Key` for each logical message.
+5. If the project sends campaigns, create its Listmonk lists, list role, and API
    user. Do not grant `lists:get_all`, `lists:manage_all`, or unrestricted SQL.
-5. Connect bounce and complaint events, then test delivery, hard bounce,
+6. Connect bounce and complaint events, then test delivery, hard bounce,
    complaint, and unsubscribe paths before enabling production traffic.
-6. Record the owner, traffic class, limits, and alerts in the project file.
+7. Record the owner, gateway project ID, senders, limits, and alerts in the
+   project file.
 
 ## Guardrails
 
@@ -85,10 +92,8 @@ environments/         environment-specific composition (next phase)
 - A shared service is not a shared failure domain by accident: noisy-neighbour
   limits and per-project observability are required.
 
-## Next implementation milestone
+## Current operational priorities
 
-Complete a read-only inventory of the NUC and its existing Caddy setup, then
-choose the DNS provider, secret store, and mail delivery provider. Add a pinned
-Listmonk/PostgreSQL deployment, an isolated Caddy route, encrypted backup job,
-monitoring, and provider-specific infrastructure as code only after that
-inventory has been reviewed.
+Complete bounce and complaint processing, add monitoring and alerts for the
+mail gateway and Azure quota, establish off-host Listmonk backups with restore
+tests, and onboard projects with isolated gateway keys and sender policies.

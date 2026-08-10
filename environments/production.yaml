@@ -37,6 +37,17 @@ services:
         redirect_uri: https://lists.inukollu.in/auth/oidc
         auto_create_users: false
         client_secret_backup: /etc/inukollu/listmonk/oidc-client-secret
+  mail_gateway:
+    canonical_url: https://resend.inukollu.in
+    send_endpoint: https://resend.inukollu.in/v1/emails
+    exposure: public-authenticated
+    deployment_status: deployed
+    host_runtime: systemd
+    listener: http://127.0.0.1:5085
+    provider: azure-communication-services-email-smtp
+    authentication: per-project-bearer-key
+    idempotency: required-process-local
+    source_repository: https://github.com/inukollu/Resend
   email_delivery:
     provider: azure-communication-services-email
     subscription_id: 8285a30d-d066-4130-89dc-aed9c4476de5
