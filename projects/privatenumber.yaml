@@ -1,0 +1,37 @@
+# Non-secret production email integration metadata for PrivateNumber.
+project:
+  slug: privatenumber
+  owner: iNukollu Tech Services
+  environment: production
+
+email:
+  gateway:
+    enabled: true
+    project_id: default-production
+    endpoint: https://resend.inukollu.in/v1/emails
+    credential_status: provisioned-on-nuc
+  sending_domain: privatenumber.in
+  allowed_senders:
+    - newsletter@privatenumber.in
+  requested_senders:
+    - email: accounts@privatenumber.in
+      display_name: PrivateNumber Accounts
+      status: active
+  allowed_recipient_domains: []
+  traffic:
+    transactional: true
+    marketing: true
+  limits:
+    messages_per_second: 1
+    messages_per_day: 1000
+  alerts:
+    bounce_rate_percent: 2
+    complaint_rate_percent: 0.1
+    quota_usage_percent: 80
+  list_management:
+    enabled: true
+    lists: []
+
+data:
+  classification: confidential
+  retention_notes: "Account email is transactional; campaigns and subscriber state remain in Listmonk."

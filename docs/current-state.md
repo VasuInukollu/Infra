@@ -110,9 +110,10 @@ also restricted to loopback and is exposed publicly only through Caddy.
 
 The gateway uses a Resend-shaped request contract and relays through the shared
 ACS SMTP identity. Applications authenticate with isolated project bearer keys;
-the ACS credential remains on the NUC. The initial `default-production` project
-allows `newsletter@privatenumber.in` and the transactional account sender
-`accounts@privatenumber.in`. Azure accepted the controlled
+the ACS credential remains on the NUC. The initial `default-production` project's
+static allowlist contains `newsletter@privatenumber.in`; the transactional
+`accounts@privatenumber.in` identity is active through the durable sender
+registry. Azure accepted the controlled
 deployment-verification submission on 2026-08-11, and idempotent replay was
 verified not to submit it twice.
 

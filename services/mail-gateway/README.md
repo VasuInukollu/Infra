@@ -144,10 +144,11 @@ environment receives an independently revocable gateway bearer key with:
 - a kill switch;
 - optional recipient-domain restrictions for nonproduction.
 
-The initial project is `default-production` and permits the PrivateNumber
-senders `newsletter@privatenumber.in` and `accounts@privatenumber.in`. The
-newsletter identity is for campaigns; account verification and recovery use
-the accounts identity. Its root-only handoff is on the NUC at:
+The initial project is `default-production`. Its static allowlist permits
+`newsletter@privatenumber.in`; `accounts@privatenumber.in` is active through
+the durable registered-sender catalog. The newsletter identity is for
+campaigns; account verification and recovery use the accounts identity. Its
+root-only handoff is on the NUC at:
 
 ```text
 /etc/inukollu/mail-gateway/project-keys/default-production
